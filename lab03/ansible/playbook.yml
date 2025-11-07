@@ -1,0 +1,100 @@
+---
+- hosts: all
+  become: true
+  tasks:
+  - name: install docker
+    apt:
+      name: docker.io
+      state: present
+      update_cache: true
+      
+- hosts: gcp_role_appserver
+  become: true
+  vars:
+    repository_url: "https://gitlab.com/qacdevops/static-website-example"
+    install_dir: "/opt/static-website-example"
+  roles:
+  - common
+  - appserver
+
+- hosts: gcp_role_proxy
+  become: true
+  roles:
+  - common
+  - proxy
+
+- hosts: gcp_role_zabbix
+  become: true
+  vars:
+    zabbix_pass: "Za88ixP@ss"
+    root_pass: "SuperSecret123"
+  tasks:
+  - name: setup docker network
+    community.docker.docker_network:
+      name: zabbix
+
+  - name: setup MySQL
+    community.docker.docker_container:
+      name: mysql-server
+      image: mysql:8.0
+      state: started
+      restart_policy: unless-stopped
+      networks:
+      - name: zabbix
+      env:
+        MYSQL_DATABASE: "zabbix"
+        MYSQL_USER: "zabbix"
+        MYSQL_PASSWORD: "{{ zabbix_pass }}"
+        MYSQL_ROOT_PASSWORD: "{{ root_pass }}"
+      command: --character-set-server=utf8 --collation-server=utf8_bin --default-authentication-plugin=mysql_native_password
+
+  - name: setup Zabbix Server
+    community.docker.docker_container:
+      name: zabbix-server
+      image: zabbix/zabbix-server-mysql:alpine-7.4-latest
+      state: started
+      networks:
+      - name: zabbix
+      restart_policy: unless-stopped
+      env:
+        MYSQL_DATABASE: "zabbix"
+        MYSQL_USER: "zabbix"
+        MYSQL_PASSWORD: "{{ zabbix_pass }}"
+        MYSQL_ROOT_PASSWORD: "{{ root_pass }}"
+        DB_SERVER_HOST: "mysql-server"
+      ports:
+      - "10051:10051"
+
+  - name: setup Zabbix WebUI
+    community.docker.docker_container:
+      name: zabbix-web
+      image: zabbix/zabbix-web-nginx-mysql:alpine-7.4-latest
+      state: started
+      networks:
+      - name: zabbix
+      restart_policy: unless-stopped
+      env:
+        MYSQL_DATABASE: "zabbix"
+        MYSQL_USER: "zabbix"
+        MYSQL_PASSWORD: "{{ zabbix_pass }}"
+        MYSQL_ROOT_PASSWORD: "{{ root_pass }}"
+        DB_SERVER_HOST: "mysql-server"
+        ZBX_SERVER_HOST: "zabbix-server"
+      ports:
+      - "80:8080"
+
+- hosts: all
+  become: true
+  tasks:
+  - name: install zabbix agent
+    community.docker.docker_container:
+      name: zabbix-agent
+      image: zabbix/zabbix-agent:alpine-7.4-latest
+      state: started
+      privileged: true
+      ports:
+      - "10050:10050"
+      env:
+        ZBX_HOSTNAME: "{{ ansible_facts['nodename'] }}"
+        ZBX_SERVER_HOST: "{{ hostvars[groups['gcp_role_zabbix'][0]]['ansible_facts']['default_ipv4']['address'] }}" 
+
