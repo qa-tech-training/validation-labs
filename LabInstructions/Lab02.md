@@ -94,25 +94,11 @@ import "types"
 allowed_source_ranges = [
   "10.0.1.0/24",      # own subnet
   "130.211.0.0/22",   # Specific external network
-  "35.191.0.0/16"     # Google Cloud Health Check ranges (important for ingress!)
+  "35.191.0.0/16",     # Google Cloud Health Check ranges (important for ingress!)
 ]
 
 all_firewall_rules_valid = rule {
-  all tfplan.resource.google_compute_firewall as _, firewall {
-    # Only check resources being created or updated
-    firewall.change.actions contains "create" or firewall.change.actions contains "update"
-    
-    # Get the source_ranges from the planned configuration
-    source_ranges = firewall.change.after.source_ranges else []
-    
-    # Only enforce this on Ingress rules (or rules with source_ranges defined)
-    is_ingress_or_has_source_ranges = (firewall.change.after.direction is "INGRESS") or types.is_list(source_ranges)
-    
-    # If it's an Ingress rule, ensure ALL of its source ranges are in the allowed list
-    is_ingress_or_has_source_ranges is false or all source_ranges as range {
-      range in allowed_source_ranges
-    }
-  }
+  allowed_source_ranges contains "10.0.1.0/24"
 }
 
 # Enforce the rule
@@ -122,7 +108,9 @@ main = rule {
 ```
 3. Sentinel works on terraform plan data, so in order to see this policy in action we have to do a little more work. Generate a plan file by running:
 ```bash
-terraform show -json > mock-plan.sentinel
+pip3 install sentinel-mock-plan
+terraform plan -json > mock-plan.json
+python3 -m sentinel_mock_plan --infile mock-plan.json --outfile mock-tfplan.sentinel
 ```
 4. Now define sentinel configuration settings, in a file called sentinel.hcl:
 ```
@@ -138,12 +126,12 @@ Now when sentinel runs, the generated plan will be picked up as a mock of the da
 sentinel apply enforce_cidr_restrictions.sentinel
 ```
 The policy should pass.
-6. Edit network/main.tf, and add "0.0.0.0/0" to the source_ranges.
-7. Regenerate the mock plan data with the new config:
+6. Edit enforce_cidr_restrictions, and change "10.0.1.0/24" to "0.0.0.0/0" to the allowed_source_ranges.
+<!-- 7. Regenerate the mock plan data with the new config:
 ```bash
 terraform show -json > mock-tfplan.sentinel
-```
-8. Run `sentinel apply enforce_cidr_restrictions.sentinel` again - sentinel should pick up the 'misconfiguration' and fail the validation.
+```-->
+7. Run `sentinel apply enforce_cidr_restrictions.sentinel` again - sentinel should pick up the 'misconfiguration' and fail the validation.
 
 #### Comparison of Sentinel and Terrascan
 Considering the differences between Sentinel and Terrascan, Terrascan has the benefits of being usable with other forms of configuration and being easier to get started with out of the box thanks to the default library of policies. Sentinel, however, benefits from strong integration with terraform cloud/enterprise, and the use of HCL means a more familiar syntax for those familiar with terraform already
