@@ -28,7 +28,7 @@ var tasks map[string]Task = make(map[string]Task)
 // @Router /tasks [delete]
 func taskHandler(w http.ResponseWriter, req *http.Request) {
     decoder := json.NewDecoder(req.Body)
-    var re, result task
+    var re, result Task
     err := decoder.Decode(&re)
 
     if err != nil && !errors.Is(err, io.EOF) {
