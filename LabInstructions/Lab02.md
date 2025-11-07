@@ -109,8 +109,9 @@ main = rule {
 3. Sentinel works on terraform plan data, so in order to see this policy in action we have to do a little more work. Generate a plan file by running:
 ```bash
 pip3 install sentinel-mock-plan
-terraform plan -json > mock-plan.json
-python3 -m sentinel_mock_plan --infile mock-plan.json --outfile mock-tfplan.sentinel
+terraform plan -out mock.tfplan
+terraform show -json -no-color mock.tfplan > mock.json
+python3 -m sentinel_mock_plan --infile mock.json --outfile mock-tfplan.sentinel
 ```
 4. Now define sentinel configuration settings, in a file called sentinel.hcl:
 ```
