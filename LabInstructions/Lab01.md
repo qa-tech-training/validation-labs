@@ -91,7 +91,7 @@ tests {
 *`Manage_Tasks (PUT).bru`*
 ```
 meta {
-  name: Manage_Tasks (POST)
+  name: Manage_Tasks (PUT)
   type: http
   seq: 3
 }
@@ -119,7 +119,7 @@ tests {
 *`Manage_Tasks (DELETE).bru`*
 ```
 meta {
-  name: Manage_Tasks (POST)
+  name: Manage_Tasks (DELETE)
   type: http
   seq: 4
 }
