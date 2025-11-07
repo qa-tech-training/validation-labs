@@ -1,0 +1,25 @@
+meta {
+  name: Manage_Tasks (POST)
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/tasks
+  auth: inherit
+}
+
+body {
+  {
+    "id": "ae3f1c",
+    "title": "Task1",
+    "description": "A sample task",
+    "completed": true
+  }
+}
+
+tests {
+  test("should have updated the task", function() {
+    expect(res.body.completed).to.equal(true);
+  });
+}

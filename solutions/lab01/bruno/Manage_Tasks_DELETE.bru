@@ -1,0 +1,25 @@
+meta {
+  name: Manage_Tasks (POST)
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/tasks
+  auth: inherit
+}
+
+body {
+  {
+    "id": "ae3f1c",
+    "title": "Task1",
+    "description": "A sample task",
+    "completed": true
+  }
+}
+
+tests {
+  test("should have deleted the task", function() {
+    expect(res.body).to.not.have.property("ae3f1c");
+  });
+}

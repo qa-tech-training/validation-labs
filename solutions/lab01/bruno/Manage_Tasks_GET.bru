@@ -1,0 +1,17 @@
+meta {
+  name: Manage_Tasks
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/tasks
+  body: none
+  auth: inherit
+}
+
+tests {
+  test("should return items", function() {
+    expect(res.body).to.be.an('object');
+  });
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Manage_Tasks (POST)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/tasks
+  auth: inherit
+}
+
+body {
+  {
+    "id": "ae3f1c",
+    "title": "Task1",
+    "description": "A sample task",
+    "completed": false
+  }
+}
+
+tests {
+  test("should have created the task", function() {
+    expect(res.body.id).to.equal("ae3f1c");
+  });
+}

@@ -1,0 +1,32 @@
+import "tfplan/v2"
+import "strings"
+import "types" 
+
+allowed_source_ranges = [
+  "10.0.1.0/24",      # own subnet
+  "130.211.0.0/22",   # Specific external network
+  "35.191.0.0/16"     # Google Cloud Health Check ranges (important for ingress!)
+]
+
+all_firewall_rules_valid = rule {
+  all tfplan.resource.google_compute_firewall as _, firewall {
+    # Only check resources being created or updated
+    firewall.change.actions contains "create" or firewall.change.actions contains "update"
+    
+    # Get the source_ranges from the planned configuration
+    source_ranges = firewall.change.after.source_ranges else []
+    
+    # Only enforce this on Ingress rules (or rules with source_ranges defined)
+    is_ingress_or_has_source_ranges = (firewall.change.after.direction is "INGRESS") or types.is_list(source_ranges)
+    
+    # If it's an Ingress rule, ensure ALL of its source ranges are in the allowed list
+    is_ingress_or_has_source_ranges is false or all source_ranges as range {
+      range in allowed_source_ranges
+    }
+  }
+}
+
+# Enforce the rule
+main = rule {
+  all_firewall_rules_valid
+}
