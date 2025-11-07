@@ -144,8 +144,9 @@ tests {
   });
 }
 ```
-5. Once you have made the changed, use bruno to execute the defined tests:
+5. Once you have made the changed, start the app and use bruno to execute the defined tests:
 ```bash
+go run main.go &
 cd bruno
 bru run --env-var baseUrl=http://localhost:8080 --reporter-json results.json
 ```
