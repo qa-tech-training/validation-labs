@@ -36,7 +36,7 @@ Bruno is an API test runner, similar in capabilities to Postman. We will use Bru
 1. Bruno is developed in JS, and can be installed easily via npm: `npm i -g @usebruno/cli`
 2. Wait for the installation to complete, then use bruno to generate a 'collection' from the openapi spec we generated:
 ```bash
-bru import --source docs/swagger.json -o bruno -n "Example Collection"
+bru import openapi --source docs/swagger.json -o bruno -n "Example Collection"
 ```
 This will create a new directory, bruno, which contains several .bru files. We will need to edit these to make them do anything interesting.
 3. Open 'Manage_Tasks (POST).bru', and amend the contents like so:
